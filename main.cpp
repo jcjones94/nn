@@ -17,11 +17,11 @@ int main(){
     const char* network_file = str3.c_str();
     
     getdata img_data(img, label);
-    node* n = new node[img_data.size];
+
     int sub_layer[] = {784, 16, 16, 10}; 
     nn* network = new nn(4, sub_layer, network_file);
- //   nn* network = new nn(network_file);
-
+//   nn* network = new nn(network_file);
+    network->train(img_data.data, img_data.size, img_data.value);
     network->~nn();        
     return 0;
     

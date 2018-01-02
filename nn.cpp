@@ -65,25 +65,43 @@ nn::~nn(){
     }
     cout<<"destructed"<<endl;
 }
-bool nn::train(unsigned char *img_data,int img_size, int value){
+bool nn::train(unsigned char *img_data,int img_size, int img_value){
 
     
-    
+    init_network(img_data, img_size);  
     calculate_output();
+
     return 0;
 }
 
+void nn::init_network(unsigned char *img_data, int img_size){
+    for(int i = 0; i < layer[0].size(); ++i){
+	layer[0][i].value = (double)img_data[i];
+    }
+}
+
 void nn::calculate_output(){
-    for(int n = 1; n < 3; ++n){
+    for(int n = 1; n < layer.size(); ++n){
 	for(int i = 0; i < layer[n].size(); ++i){
 	    for(int j = 0; j < layer[n-1].size();++j){
 	    	layer[n][i].value += layer[n-1][j].value*layer[n-1][j].weight[i];
 	    }
-	    layer[n][i].value = layer[n][i].value/(2*(1+abs(layer[n][i].value))) + 0.5;
+	    layer[n][i].value += layer[n][i].bias;
+	    layer[n][i].value = layer[n][i].value/(2.0*(1.0+abs(layer[n][i].value))) + 0.5;
+
+    	    cout<<i<<" : "<<layer[n][i].value<<endl;
     	}
     }
 
 }
+
+void nn::back_prop(){
+    
+
+}
+
+
+// thought i needed it but turn out didnt
 template <typename T>
 T nn::ltob(T value){
     char *temp = (char *)&value;

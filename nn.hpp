@@ -9,7 +9,7 @@
 struct node{
     double* weight;
     double bias;
-    int value;
+    double value;
 };
 
 class nn{
@@ -22,7 +22,8 @@ class nn{
      ~nn();
      bool train(unsigned char* img_data,int size, int value);
      void calculate_output();
-
+     void back_prop();
+     void init_network(unsigned char *img_data, int size);
    private:
      template <class T>
      T ltob(T);
