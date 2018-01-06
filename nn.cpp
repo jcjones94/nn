@@ -4,18 +4,22 @@
 using namespace std;
 nn::nn(int layers, int sub_layer[],const char *file){
    network_file = (char *)file;
+   srand(time(NULL));
    layer = vector<vector<node> >(layers);
+   grad = vector<vector<node> >(layers);
    /*if(layers != sizeof(sub_layer)){
 	cout<<"number of layers doesnt equal number sub_layers: constructor"<<endl;
    }*/
    for(int i = 0; i< layers;++i){
 	layer[i] = vector<node>(sub_layer[i]);
+	grad[i] = vector<node>(sub_layer[i]);
    }
    for(int i = 0; i< (layers - 1);++i){
 	for(int j = 0; j < sub_layer[i];++j){
 	    layer[i][j].weight = new double[layer[i+1].size()];
+	    grad[i][j].weight = new double[layer[i+1].size()];
 	    for(int n = 0; n < layer[i+1].size();++n){
-		layer[i][j].weight[n] = 0.0;
+		layer[i][j].weight[n] = ((double)(rand()%100))/10.0 - 5.0;
 	    }
 	}
    }
@@ -31,17 +35,22 @@ nn::nn(const char *file){
     cout<<specs<<endl;
     
     layer = vector<vector<node> >(specs);
+    grad = vector<vector<node> >(specs);
+   
     cout<<specs<<endl;
     for(int i = 0;i<layer.size(); ++i){
 	network.read((char *)&specs, 4);
         layer[i] = vector<node>(specs);
+        grad[i] = vector<node>(specs);
         
     }    
     for(int i = 1; i < layer.size(); ++i){
         for(int j = 0; j < layer[i-1].size();++j){
 	    layer[i-1][j].weight = new double[(layer[i].size())*sizeof(double)];
+	    grad[i-1][j].weight = new double[(layer[i].size())*sizeof(double)];
 	    network.read((char*)layer[i-1][j].weight, layer[i].size()*sizeof(double));
             network.read((char*)&layer[i-1][j].bias, sizeof(double));
+	    grad[i][j].value = 0.0;
         }
     }
 }
@@ -71,6 +80,32 @@ bool nn::train(unsigned char *img_data,int img_size, int img_value){
     init_network(img_data, img_size);  
     calculate_output();
 
+    for(int i = 0; i < grad[grad.size() - 1].size();++i){
+	int x;
+	if(img_value == i){
+	    x = 1;
+	}else{
+	    x = 0;
+	}
+	grad[grad.size() - 1][i].value = 2*(x - layer[layer.size() - 1][i].value);
+	//cout<<grad[grad.size() - 1][i].value<<endl;
+    }
+
+    for(int l = grad.size() - 1; l > 0; --l){
+	for(int i = 0; i < grad[l].size();++i){
+	    for(int j = 0; j < grad[l - 1].size();++j){
+		grad[l - 1][j].weight[i] += grad[l][i].value*layer[l-1][j].value/(2*pow(1+abs(grad[l][i].z),2));
+//		if(l > 2)cout<<grad[l-1][j].weight[i]<<" : ";
+		grad[l - 1][j].value += grad[l][i].value*layer[l-1][j].weight[i]/(2*pow(1+abs(grad[l][i].z),2));
+//		if(j == 0 && l == 3)cout<<grad[l-1][j].value<<endl;
+	    }
+	    
+	    grad[l][i].bias += grad[l][i].value/(2*pow(1+abs(grad[l][i].z),2));
+//	    cout<<layer[l][i].value<<endl;
+	}
+    }
+
+    //descend();
     return 0;
 }
 
@@ -84,15 +119,40 @@ void nn::calculate_output(){
     for(int n = 1; n < layer.size(); ++n){
 	for(int i = 0; i < layer[n].size(); ++i){
 	    for(int j = 0; j < layer[n-1].size();++j){
+		//if(i < 1) cout<<layer[n-1][j].value<<endl;
 	    	layer[n][i].value += layer[n-1][j].value*layer[n-1][j].weight[i];
 	    }
 	    layer[n][i].value += layer[n][i].bias;
+	    layer[n][i].z = layer[n][i].value;
 	    layer[n][i].value = layer[n][i].value/(2.0*(1.0+abs(layer[n][i].value))) + 0.5;
+	    grad[n][i].value = 0;
 
-    	    cout<<i<<" : "<<layer[n][i].value<<endl;
+    	  //  cout<<i<<" : "<<layer[n][i].value<<endl;
     	}
     }
+    for(int i = 0;i < 16;++i){
+	cout<<layer[3][i].value<<endl;
+	//if(i%28 == 0)cout<<endl;
+    }
 
+}
+
+void nn::descend(){
+   
+    for(int l = 1; l < grad.size();++l){
+	for(int i = 0; i < grad[l].size();++i){
+	   //if(l==grad.size() -2)cout<<grad[l][i].value<<endl;
+	   for(int j = 0; j < grad[l- 1].size();++j){
+		layer[l - 1][j].weight[i] += grad[l-1][j].weight[i];
+		grad[l-1][j].weight[i] = 0.0;
+	//	if(l == grad.size() - 1)cout<<":"<<grad[l-1][j].weight[i];
+	   }
+	  // cout<<endl;
+	   layer[l][i].bias += grad[l][i].bias;
+	   grad[l][i].bias = 0.0;
+	   grad[l][i].value = 0.0;
+	}
+    }
 }
 
 void nn::back_prop(){

@@ -4,18 +4,21 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <cstdlib>
 #endif 
 
 struct node{
     double* weight;
     double bias;
     double value;
+    double z;
 };
 
 class nn{
 
    public:
      std::vector<std::vector<node> > layer;
+     std::vector<std::vector<node> > grad;
      char *network_file;
      nn(int layers, int sub_layer[], const char *file);
      nn(const char *file);
@@ -24,8 +27,10 @@ class nn{
      void calculate_output();
      void back_prop();
      void init_network(unsigned char *img_data, int size);
+     void descend();
    private:
      template <class T>
      T ltob(T);
+
 };
 

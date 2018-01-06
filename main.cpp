@@ -20,7 +20,15 @@ int main(){
 
     int sub_layer[] = {784, 16, 16, 10}; 
     nn* network = new nn(4, sub_layer, network_file);
-//   nn* network = new nn(network_file);
+//    nn* network = new nn(network_file);
+    for(int i = 0; i < 1000;++i){
+        cout<<img_data.value<<endl;
+        network->train(img_data.data, img_data.size, img_data.value);
+        img_data.next_img();
+	if(i%10 == 9)network->descend();
+    }
+    cout<<img_data.value<<endl;
+   
     network->train(img_data.data, img_data.size, img_data.value);
     network->~nn();        
     return 0;
