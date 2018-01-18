@@ -70,7 +70,7 @@ nn::~nn(){
         for(int j = 0; j < layer[i].size(); ++j){
     	    network.write((char *)layer[i][j].weight, layer[i+1].size()*sizeof(double));
             network.write((char *)&layer[i][j].bias, sizeof(double));
-	}
+	   }
     }
     cout<<"destructed"<<endl;
 }
@@ -80,29 +80,36 @@ bool nn::train(unsigned char *img_data,int img_size, int img_value){
     init_network(img_data, img_size);  
     calculate_output();
 
+    double brightest = 0.0;
     for(int i = 0; i < grad[grad.size() - 1].size();++i){
-	int x;
-	if(img_value == i){
-	    x = 1;
-	}else{
-	    x = 0;
-	}
-	grad[grad.size() - 1][i].value = 2*(x - layer[layer.size() - 1][i].value);
-	//cout<<grad[grad.size() - 1][i].value<<endl;
-    }
+	    int x;
+	    if(img_value == i){
+    	    x = 1;
+    	}else{
+    	    x = 0;
+    	}
 
+        if(layer[layer.size() - 1][i].value > brightest){
+            brightest = layer[layer.size() - 1][i].value;
+            nn_guess = i;
+        }
+    	grad[grad.size() - 1][i].value = 2*(x - layer[layer.size() - 1][i].value);
+
+        
+    }
+    
     for(int l = grad.size() - 1; l > 0; --l){
-	for(int i = 0; i < grad[l].size();++i){
+	   for(int i = 0; i < grad[l].size();++i){
 	    for(int j = 0; j < grad[l - 1].size();++j){
 		grad[l - 1][j].weight[i] += grad[l][i].value*layer[l-1][j].value/(2*pow(1+abs(grad[l][i].z),2));
-//		if(l > 2)cout<<grad[l-1][j].weight[i]<<" : ";
+
 		grad[l - 1][j].value += grad[l][i].value*layer[l-1][j].weight[i]/(2*pow(1+abs(grad[l][i].z),2));
-//		if(j == 0 && l == 3)cout<<grad[l-1][j].value<<endl;
+
 	    }
 	    
 	    grad[l][i].bias += grad[l][i].value/(2*pow(1+abs(grad[l][i].z),2));
-//	    cout<<layer[l][i].value<<endl;
-	}
+
+	   }
     }
 
     //descend();
@@ -141,14 +148,14 @@ void nn::descend(){
    
     for(int l = 1; l < grad.size();++l){
 	for(int i = 0; i < grad[l].size();++i){
-	   //if(l==grad.size() -2)cout<<grad[l][i].value<<endl;
+	   
 	   for(int j = 0; j < grad[l- 1].size();++j){
-		layer[l - 1][j].weight[i] += grad[l-1][j].weight[i];
+		layer[l - 1][j].weight[i] += grad[l-1][j].weight[i]/4;
 		grad[l-1][j].weight[i] = 0.0;
-	//	if(l == grad.size() - 1)cout<<":"<<grad[l-1][j].weight[i];
+	
 	   }
-	  // cout<<endl;
-	   layer[l][i].bias += grad[l][i].bias;
+	  
+	   layer[l][i].bias += grad[l][i].bias/4;
 	   grad[l][i].bias = 0.0;
 	   grad[l][i].value = 0.0;
 	}

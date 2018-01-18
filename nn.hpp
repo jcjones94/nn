@@ -17,6 +17,7 @@ struct node{
 class nn{
 
    public:
+     int nn_guess;
      std::vector<std::vector<node> > layer;
      std::vector<std::vector<node> > grad;
      char *network_file;

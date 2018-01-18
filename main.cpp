@@ -1,5 +1,4 @@
-//#include <iostream>
-//#include <fstream>
+
 #include <cstdlib>
 
 #include "getdata.hpp"
@@ -9,6 +8,7 @@ using namespace std;
 
 
 int main(){
+    int total_correct = 0;
     string str1 = "images";
     string str2 = "labels";
     string str3 = "network.dat";
@@ -21,15 +21,15 @@ int main(){
     int sub_layer[] = {784, 16, 16, 10}; 
     nn* network = new nn(4, sub_layer, network_file);
 //    nn* network = new nn(network_file);
-    for(int i = 0; i < 1000;++i){
+    for(int i = 0; i < 5000;++i){
         cout<<img_data.value<<endl;
         network->train(img_data.data, img_data.size, img_data.value);
+        if(img_data.value == network->nn_guess)  total_correct++;
         img_data.next_img();
-	if(i%10 == 9)network->descend();
+	   if(i%10 == 9)network->descend();
     }
-    cout<<img_data.value<<endl;
+    cout<<"percent correct "<<(total_correct/5000.0)<<endl;
    
-    network->train(img_data.data, img_data.size, img_data.value);
     network->~nn();        
     return 0;
     
